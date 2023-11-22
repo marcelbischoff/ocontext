@@ -61,7 +61,8 @@ let decode_all s =
   List.rev (aux [] s)
 
 let () =
-  Dream.run @@ Dream.logger (*@@ Dream.memory_sessions*)
+  Dream.run ~interface:"0.0.0.0"
+  @@ Dream.logger (*@@ Dream.memory_sessions*)
   @@ Dream.router
        [
          Dream.get "/" (fun _ ->
