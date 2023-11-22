@@ -5,13 +5,18 @@ RUN sudo apk add --update libev-dev openssl-dev
 
 WORKDIR /home/opam
 
-# Install dependencies
-ADD hello.opam hello.opam
-RUN opam install . --deps-only
+RUN opam install dune 
+
+RUN opam install dream 
+
+RUN opam install jingoo
+
+RUN opam install dream-livereload
+
 
 # Build project
 ADD . .
-RUN opam exec -- dune build
+RUN opam exec -- dune build bin/main.exe
 
 
 
@@ -19,6 +24,8 @@ FROM alpine:3.18.4 as run
 
 RUN apk add --update libev
 
-COPY --from=build /home/opam/_build/default/app.exe /bin/app
+COPY --from=build /home/opam/_build/default/bin/main.exe /bin/app
+COPY templates templates
+COPY data.json .
 
 ENTRYPOINT /bin/app
