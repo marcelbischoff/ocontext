@@ -3,6 +3,8 @@ FROM ocaml/opam:alpine as build
 # Install system dependencies
 RUN sudo apk add --update libev-dev openssl-dev
 
+RUN sudo ln -f /usr/bin/opam-2.1 /usr/bin/opam 
+
 WORKDIR /home/opam
 
 RUN opam install dune 
