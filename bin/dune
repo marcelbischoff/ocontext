@@ -9,3 +9,8 @@
  (name cli)
  (modules cli)
  (libraries yojson))
+
+(executable
+ (name parse)
+ (modules parse)
+ (libraries str))
