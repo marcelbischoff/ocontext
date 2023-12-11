@@ -10,6 +10,7 @@ let load_keyword_records file =
   let open Yojson.Basic.Util in
   let keywords = json |> member "keyword" |> to_list |> filter_string in
   let similarities = json |> member "similarity" |> to_list |> filter_float in
+  let () = assert (  List.length keywords = List.length similarities )  in
   let map_to_kw a b = { keyword = fst b; similarity = snd b; index = a } in
   List.combine keywords similarities
   |> List.to_seq |> Seq.mapi map_to_kw |> Array.of_seq
