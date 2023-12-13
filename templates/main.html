@@ -9,7 +9,7 @@
         type="serach" 
         autocomplete="off" 
         name="search" 
-        hx-post="/search" 
+        hx-post="/search/{{ state }}" 
         hx-trigger="input changed delay:10ms, search" 
         hx-target="#search-results" 
       >

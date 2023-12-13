@@ -85,6 +85,21 @@ let post state request = (
              | _ -> Dream.empty `Bad_Request
 )
 
+let search state request = (
+             match%lwt Dream.form ~csrf:false request with
+             | `Ok [ ("search", search_term) ] ->
+                 let active_item search =
+                   Jg_template.from_file "templates/active.html"
+                     ~models:[ 
+                         ("search", Jg_types.Tstr search);
+                         ("state", Jg_types.Tstr state)
+                    ]
+                 in
+                 search search_term |> List.map active_item |> String.concat ""
+                 |> Dream.html
+             | _ -> Dream.empty `Bad_Request
+)
+
 let () =
   Dream.run ~interface:"0.0.0.0"
   @@ Dream.logger (*@@ Dream.memory_sessions*)
@@ -92,19 +107,15 @@ let () =
        [
          Dream.get "/" (fun _ ->
              Jg_template.from_file "templates/main.html" |> Dream.html);
-         Dream.post "/search" (fun request ->
-             match%lwt Dream.form ~csrf:false request with
-             | `Ok [ ("search", search_term) ] ->
-                 let active_item search =
-                   Jg_template.from_file "templates/active.html"
-                     ~models:[ 
-                         ("search", Jg_types.Tstr search);
-                         ("state", Jg_types.Tstr "")
-                    ]
-                 in
-                 search search_term |> List.map active_item |> String.concat ""
-                 |> Dream.html
-             | _ -> Dream.empty `Bad_Request);
+         Dream.get "/:state" (fun request ->
+             let state = Dream.param request "state" in
+             Jg_template.from_file "templates/main.html" 
+             ~models:[("state", Jg_types.Tstr state)]|> Dream.html);
+         Dream.post "/search/" (fun request ->
+             search "" request);
+         Dream.post "/search/:state" (fun request ->
+             let state = Dream.param request "state" in
+             search state request);
          Dream.post "/" (fun request ->
              post "" request);
          Dream.post "/:state" (fun request ->
