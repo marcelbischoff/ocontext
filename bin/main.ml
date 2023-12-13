@@ -112,8 +112,8 @@ let post state request =
             let rank =
               match current with
               | best :: _ when best.rank = 1 -> 1
-              | best :: _ -> (best.rank / 2) 
-              | _ -> (Array.length keyword_records / 2) 
+              | best :: _ -> best.rank / 2
+              | _ -> Array.length keyword_records / 2
             in
             keyword_records |> Array.find_opt (fun x -> x.rank = rank)
             >>= fun x -> Some x.index
