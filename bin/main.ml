@@ -158,8 +158,8 @@ let () =
              let state_rep = List.map Result.to_list decoded |> List.flatten in
              let current = get_current_keywords state_rep in
              match current with
-             | best :: _ when best.similarity = 1.0 -> 
-                Jg_template.from_file "templates/win.html" |> Dream.html
+             | best :: _ when best.similarity = 1.0 ->
+                 Jg_template.from_file "templates/win.html" |> Dream.html
              | _ ->
                  let current_keywords =
                    current |> List.map format |> String.concat "<br>"
