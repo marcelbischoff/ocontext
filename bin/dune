@@ -1,5 +1,5 @@
 (executable
- (public_name ocontext)
+ (public_name app)
  (name main)
  (modules main)
  (libraries dream dream-livereload jingoo)

@@ -1,6 +1,12 @@
 open Jingoo
 
-type keyword_record = { keyword : string; _similarity : float; _index : int }
+type keyword_record = { 
+    keyword : string; 
+    _similarity : float; 
+    _index : int;
+    _rank : int
+}
+
 
 let max_search_terms = 10
 let ( >>= ) = Option.bind
@@ -12,8 +18,18 @@ let load_keyword_records file =
   let open Yojson.Basic.Util in
   let keywords = json |> member "keyword" |> to_list |> filter_string in
   let similarities = json |> member "similarity" |> to_list |> filter_float in
-  let map_to_kw a b = { keyword = fst b; _similarity = snd b; _index = a } in
-  List.combine keywords similarities
+  let ranks = json |> member "rank" |> to_list |> filter_int in
+  let () = assert (List.length keywords = List.length similarities) in
+  let () = assert (List.length keywords = List.length ranks) in
+  let map_to_kw a b =
+    {
+      keyword = fst b;
+      _similarity = fst @@ snd b;
+      _index = a;
+      _rank = snd @@ snd b;
+    }
+  in
+  List.combine keywords (List.combine similarities ranks)
   |> List.to_seq |> Seq.mapi map_to_kw |> Array.of_seq
 
 let keyword_records_to_keyword_map keyword_records =
@@ -60,6 +76,15 @@ let decode_all s =
   in
   List.rev (aux [] s)
 
+let post state request = (
+             match%lwt Dream.form ~csrf:false request with
+             | `Ok [ ("search", s) ] ->
+                 Jg_template.from_string "{{ s }}"
+                   ~models:[ ("s", Jg_types.Tstr ( s ^ "state=" ^ state)) ]
+                 |> Dream.html
+             | _ -> Dream.empty `Bad_Request
+)
+
 let () =
   Dream.run ~interface:"0.0.0.0"
   @@ Dream.logger (*@@ Dream.memory_sessions*)
@@ -72,18 +97,19 @@ let () =
              | `Ok [ ("search", search_term) ] ->
                  let active_item search =
                    Jg_template.from_file "templates/active.html"
-                     ~models:[ ("search", Jg_types.Tstr search) ]
+                     ~models:[ 
+                         ("search", Jg_types.Tstr search);
+                         ("state", Jg_types.Tstr "")
+                    ]
                  in
                  search search_term |> List.map active_item |> String.concat ""
                  |> Dream.html
              | _ -> Dream.empty `Bad_Request);
          Dream.post "/" (fun request ->
-             match%lwt Dream.form ~csrf:false request with
-             | `Ok [ ("search", s) ] ->
-                 Jg_template.from_string "{{ s }}"
-                   ~models:[ ("s", Jg_types.Tstr s) ]
-                 |> Dream.html
-             | _ -> Dream.empty `Bad_Request);
+             post "" request);
+         Dream.post "/:state" (fun request ->
+             let state = Dream.param request "state" in
+             post state request);
          Dream.get "/state/:state" (fun request ->
              let state = Dream.param request "state" in
              let decoded = decode_all state in

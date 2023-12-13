@@ -33,7 +33,7 @@ let keyword_records_to_keyword_map keyword_records =
   let imap a = (a.keyword, a) in
   keyword_records |> Array.to_seq |> Seq.map imap |> StringMap.of_seq
 
-let keyword_records = load_keyword_records "data-ranked.json"
+let keyword_records = load_keyword_records "data.json"
 
 let search search_term =
   let sw = String.lowercase_ascii search_term in
