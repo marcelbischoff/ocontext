@@ -6,6 +6,7 @@
  (preprocess (pps lwt_ppx)))
 
 (executable
+ (public_name cli)
  (name cli)
  (modules cli)
  (libraries yojson))

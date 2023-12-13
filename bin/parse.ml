@@ -1,6 +1,7 @@
 let read_file file = In_channel.with_open_text file In_channel.input_all
 let split_str sep = Str.(split (regexp sep))
 
+type record = { word : string; similarity : float; idx : int; rank : int }
 type wordv = { word : string; vector : float array }
 type intermediate = { adotb : float; adota : float; bdotb : float }
 
@@ -44,19 +45,33 @@ let filename = "data/wiki-news-300d-1M.vec" in
 let lines = read_file filename |> split_str "\n" in
 let word = "camel" in
 match lines with
-| header :: data ->
+| _ :: data ->
     let word_vectors : wordv list =
       data |> List.to_seq |> Seq.filter_map parse_line
       |> Seq.take ((64 * 64) - 1)
       |> List.of_seq
     in
     let word_vector =
-      word_vectors |> List.map (fun x -> (x.word, x.vector)) |> List.assoc word
+      word_vectors
+      |> List.map (fun (x : wordv) -> (x.word, x.vector))
+      |> List.assoc word
     in
-    let keyword = word_vectors |> List.map (fun x -> x.word) in
-    let similarity =
-      word_vectors |> List.map (fun x -> cosine_sim word_vector x.vector)
+    let records : record list =
+      word_vectors
+      |> List.mapi (fun i (x : wordv) ->
+             {
+               word = x.word;
+               similarity = cosine_sim word_vector x.vector;
+               idx = i;
+               rank = 0;
+             })
+      |> List.sort (fun a b -> Float.compare b.similarity a.similarity)
+      |> List.mapi (fun i x -> { x with rank = i })
+      |> List.sort (fun a b -> compare a.idx b.idx)
     in
+    let keyword = records |> List.map (fun (x : record) -> x.word) in
+    let similarity = records |> List.map (fun x -> x.similarity) in
+    let rank = records |> List.map (fun x -> x.rank) in
     let () = print_endline "{\"keyword\": [" in
     let () =
       keyword
@@ -65,8 +80,13 @@ match lines with
     in
     let () = print_endline "], \"similarity\": [" in
     let () =
-      similarity |> List.map (function 1.0 -> "1.0" | x -> string_of_float x) |> String.concat ","
-      |> print_endline
+      similarity
+      |> List.map (function 1.0 -> "1.0" | x -> string_of_float x)
+      |> String.concat "," |> print_endline
+    in
+    let () = print_endline "], \"rank\": [" in
+    let () =
+      rank |> List.map string_of_int |> String.concat "," |> print_endline
     in
     print_endline "]}"
 | _ -> failwith "data invalid"
