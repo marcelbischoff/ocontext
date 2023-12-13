@@ -14,7 +14,8 @@
         hx-target="#search-results" 
       >
     </form>
-    <span id="search-results">---</span>
+    <span id="search-results">{{ search }}</span>
+    <div hx-get="/keywords/{{ state }}" hx-trigger="load"> </div>
   </body>
 </html>
 
