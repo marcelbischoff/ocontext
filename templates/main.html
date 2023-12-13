@@ -3,7 +3,14 @@
     <script src="https://unpkg.com/htmx.org@1.9.8"></script>
   </head>
   <body>
-    <form method="POST" action="/{{ state }}">
+    <span
+      hx-vals='{"search": "/hint"}'
+      hx-target="body" 
+      hx-trigger="click" 
+      hx-replace-url="true"
+      hx-post="/{{ state }}">/hint</span> for hints
+    <form hx-boost="true" method="POST" action="/{{ state }}">
+        <!--<form hx-post="/{{ state }}">-->
       <input 
         class="form-control" 
         type="serach" 

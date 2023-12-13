@@ -103,8 +103,22 @@ let post state request =
                  Jg_template.from_string "{{ s }}"
                    ~models:[ ("s", Jg_types.Tstr ( s ^ "state=" ^ state)) ]
                  |> Dream.html *)
-      let () = print_endline s in
-      let idx = keyword_to_idx s in
+      let idx =
+        match s with
+        | "/hint" ->
+            let decoded = decode_all state in
+            let state_rep = List.map Result.to_list decoded |> List.flatten in
+            let current = get_current_keywords state_rep in
+            let rank =
+              match current with
+              | best :: _ when best.rank = 1 -> 1
+              | best :: _ -> (best.rank / 2) 
+              | _ -> (Array.length keyword_records / 2) 
+            in
+            keyword_records |> Array.find_opt (fun x -> x.rank = rank)
+            >>= fun x -> Some x.index
+        | _ -> keyword_to_idx s
+      in
       let decoded = decode_all state in
       let state_rep = List.map Result.to_list decoded |> List.flatten in
       match idx with
