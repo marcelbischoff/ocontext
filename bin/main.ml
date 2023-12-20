@@ -143,7 +143,7 @@ let search state request =
           ~models:
             [ ("search", Jg_types.Tstr search); ("state", Jg_types.Tstr state) ]
       in
-      search search_term |> List.map active_item |> String.concat ""
+      (search search_term |> List.map active_item |> String.concat "") ^ "---</br>"
       |> Dream.html
   | _ -> Dream.empty `Bad_Request
 
@@ -195,4 +195,5 @@ let () =
                |> List.flatten |> List.map string_of_int |> String.concat ","
              in
              Dream.html ("state = " ^ state ^ "<br/>decoded = " ^ state_rep));
+        Dream.get "dist/**" (Dream.static "dist/.");
        ]
