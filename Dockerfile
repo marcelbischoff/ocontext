@@ -27,7 +27,6 @@ RUN opam install jingoo
 
 RUN opam install dream-livereload
 
-
 # Build project
 ADD . .
 RUN opam exec -- dune build bin/main.exe
@@ -37,7 +36,7 @@ FROM alpine:3.18.4 as run
 RUN apk add --update libev
 
 COPY --from=build /home/opam/_build/default/bin/main.exe /bin/app
-COPY --from=tailwind /usr/src/app/dist /bin/app/dist
+COPY --from=tailwind /usr/src/app/dist/output.css dist/output.css
 COPY templates templates
 COPY data.json .
 

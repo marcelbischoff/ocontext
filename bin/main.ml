@@ -124,7 +124,7 @@ let post state request =
       match idx with
       | Some i ->
           let new_state = i :: state_rep |> encode_all in
-          Dream.redirect request ("/" ^ new_state)
+          Dream.redirect request ("/keywords/" ^ new_state)
       | None ->
           Jg_template.from_file "templates/main.html"
             ~models:
@@ -143,7 +143,7 @@ let search state request =
           ~models:
             [ ("search", Jg_types.Tstr search); ("state", Jg_types.Tstr state) ]
       in
-      (search search_term |> List.map active_item |> String.concat "") ^ "---</br>"
+      (search search_term |> List.map active_item |> String.concat "")
       |> Dream.html
   | _ -> Dream.empty `Bad_Request
 
@@ -178,7 +178,7 @@ let () =
                  let current_keywords =
                    current |> List.map format |> String.concat "<br>"
                  in
-                 Dream.html current_keywords);
+                 Dream.html (current_keywords ^ "<div id=\"search-results\" hx-swap-oob=\"inner\"></div>") ~headers:[("HX-Push-Url", "/" ^state)]);
          Dream.post "/search/" (fun request -> search "" request);
          Dream.post "/search/:state" (fun request ->
              let state = Dream.param request "state" in
