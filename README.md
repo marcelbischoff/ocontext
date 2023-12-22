@@ -1,8 +1,13 @@
 # ocontexto
 
 ## Run
+Run the server locally
 ```sh
 dune exec app --watch
+```
+and run tailwindcss locally with
+```sh
+bun run tailwindcss -i ./templates/input.css -o ./dist/output.css  --watch
 ```
 
 ## Deploy
