@@ -12,17 +12,17 @@
         <div class="w-full max-w-sm border border-ctp-pink-200 rounded-lg from-ctp-mantle to-ctp-crust outline-ctp-pink">
                 <div class="px-4 pt-4">
     <h1 class="text-3xl text-ctp-pink">OContext</h1>
+    <div class="mb-2">
     <ul>
-        <li>find the five letter word with index 0</li>
-        <li>the lower the index the closer</li>
-        <li>score is word similarity</li>
-    </ul>
-    <span
+        <li>find the five letter word</li>
+        <li><a href=""
       hx-vals='{"search": "/hint"}'
       hx-target="#keywords" 
       hx-trigger="click" 
       hx-replace-url="false"
-      hx-post="">/hint</span> for hints</li>
+      hx-post="">/hint</a> for hints</li>
+    </ul>
+    </div>
     <form id="input" hx-target="#keywords" hx-post="" hx-trigger="submit" method="POST" action="/{{ state }}">
       <input 
         class="form-control text-ctp-base" 
