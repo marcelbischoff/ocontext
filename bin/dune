@@ -1,11 +1,17 @@
 (executable
- (public_name ocontext)
+ (public_name app)
  (name main)
  (modules main)
  (libraries dream dream-livereload jingoo)
  (preprocess (pps lwt_ppx)))
 
 (executable
+ (public_name cli)
  (name cli)
  (modules cli)
  (libraries yojson))
+
+(executable
+ (name parse)
+ (modules parse)
+ (libraries str))

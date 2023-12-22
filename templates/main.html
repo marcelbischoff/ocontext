@@ -1,20 +1,46 @@
 <html>
-  <head><title>OContext</title>
+  <head>
+    <title>OContext</title> 
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="/dist/output.css" rel="stylesheet">
     <script src="https://unpkg.com/htmx.org@1.9.8"></script>
   </head>
   <body>
-    <form method="POST" action="/">
+    <div class="min-h-screen grid ctp-mocha">
+      <main class="flex flex-col justify-center items-center bg-gradient-to-b from-ctp-base to-ctp-crust p-6">
+        <div class="w-full max-w-sm border border-ctp-pink-200 rounded-lg from-ctp-mantle to-ctp-crust outline-ctp-pink">
+                <div class="px-4 pt-4">
+    <h1 class="text-3xl text-ctp-pink">OContext</h1>
+    <div class="mb-2">
+    <ul>
+        <li>find the five letter word</li>
+        <li><a href=""
+      hx-vals='{"search": "/hint"}'
+      hx-target="#keywords" 
+      hx-trigger="click" 
+      hx-replace-url="false"
+      hx-post="">/hint</a> for hints</li>
+    </ul>
+    </div>
+    <form id="input" hx-target="#keywords" hx-post="" hx-trigger="submit" method="POST" action="/{{ state }}">
       <input 
-        class="form-control" 
+        class="form-control text-ctp-base" 
         type="serach" 
         autocomplete="off" 
         name="search" 
-        hx-post="/search" 
+        hx-post="/search/{{ state }}" 
         hx-trigger="input changed delay:10ms, search" 
-        hx-target="#search-results" 
+        hx-target="#search-results"
+        autofocus
       >
     </form>
-    <span id="search-results">---</span>
+    <div id="search-results" class="absolute z-10 mt-30 w-56 bg-white rounded-lg">{{ search }}</div>
+    <div id="keywords" hx-get="/keywords/{{ state }}" hx-trigger="load"> </div>
+         </div>
+         </div>
+      </main>
+    </div>
   </body>
 </html>
 

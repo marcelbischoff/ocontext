@@ -1,6 +1,11 @@
-type keyword_record = { keyword : string; similarity : float; index : int }
-let max_search_terms = 10
+type keyword_record = {
+  keyword : string;
+  similarity : float;
+  index : int;
+  rank : int;
+}
 
+let max_search_terms = 10
 let ( >>= ) = Option.bind
 
 module StringMap = Map.Make (String)
@@ -10,8 +15,18 @@ let load_keyword_records file =
   let open Yojson.Basic.Util in
   let keywords = json |> member "keyword" |> to_list |> filter_string in
   let similarities = json |> member "similarity" |> to_list |> filter_float in
-  let map_to_kw a b = { keyword = fst b; similarity = snd b; index = a } in
-  List.combine keywords similarities
+  let ranks = json |> member "rank" |> to_list |> filter_int in
+  let () = assert (List.length keywords = List.length similarities) in
+  let () = assert (List.length keywords = List.length ranks) in
+  let map_to_kw a b =
+    {
+      keyword = fst b;
+      similarity = fst @@ snd b;
+      index = a;
+      rank = snd @@ snd b;
+    }
+  in
+  List.combine keywords (List.combine similarities ranks)
   |> List.to_seq |> Seq.mapi map_to_kw |> Array.of_seq
 
 let keyword_records_to_keyword_map keyword_records =
@@ -21,16 +36,11 @@ let keyword_records_to_keyword_map keyword_records =
 let keyword_records = load_keyword_records "data.json"
 
 let search search_term =
-    let sw = String.lowercase_ascii search_term in
-    let extract_kw record = record.keyword in
-    let filter_kw kw = String.starts_with kw ~prefix:sw in
-    keyword_records 
-    |> Array.to_list
-    |> List.to_seq
-    |> Seq.map extract_kw
-    |> Seq.filter filter_kw
-    |> Seq.take max_search_terms
-    |> List.of_seq
+  let sw = String.lowercase_ascii search_term in
+  let extract_kw record = record.keyword in
+  let filter_kw kw = String.starts_with kw ~prefix:sw in
+  keyword_records |> Array.to_list |> List.to_seq |> Seq.map extract_kw
+  |> Seq.filter filter_kw |> Seq.take max_search_terms |> List.of_seq
 
 let keyword_map = keyword_records_to_keyword_map keyword_records
 
@@ -49,14 +59,18 @@ let next_prompt state =
   let idx = keyword_to_idx kw in
   match idx with
   | Some i -> i :: state
-  | None -> let suggestions = search kw |> String.concat "\n" in
+  | None ->
+      let suggestions = search kw |> String.concat "\n" in
       let () = print_endline "word does not exist, try" in
-      let () = print_endline suggestions in 
+      let () = print_endline suggestions in
       state
 
 let format keyword_record =
-  keyword_record.keyword ^ ": " ^ Float.to_string keyword_record.similarity
-
+  keyword_record.keyword ^ ": "
+  ^ string_of_int keyword_record.rank
+  ^ " ("
+  ^ Float.to_string keyword_record.similarity
+  ^ ")"
 
 let rec play state =
   let new_state = state |> next_prompt in

@@ -1,1 +1,7 @@
-<span hx-vals='{"search": "{{ search }}"' hx-target="body" hx-trigger="click" hx-post="/">{{ search }}</span></br>
+<a href="" 
+  class="text-ctp-base"
+  hx-vals='{{ "{" }}"search": "{{ search }}"{{ "}" }}' 
+  hx-target="#keywords" 
+  hx-trigger="click" 
+  hx-replace-url="true"
+  hx-post="/{{ state }}">{{ search }}</a></br>
