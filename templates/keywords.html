@@ -1,0 +1,14 @@
+{{ current_keywords | safe }}
+<div id="search-results" hx-swap-oob="inner">{{ search }}</div>
+<form id="input" hx-swap-oob="inner">
+      <input 
+        class="form-control text-ctp-base" 
+        type="serach" 
+        autocomplete="off" 
+        name="search" 
+        hx-post="/search/{{ state }}" 
+        hx-trigger="input changed delay:10ms, search" 
+        hx-target="#search-results"
+        autofocus
+      >
+</form>

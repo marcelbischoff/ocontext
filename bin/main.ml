@@ -45,7 +45,7 @@ let search search_term =
   keyword_records |> Array.to_list |> List.to_seq |> Seq.map extract_kw
   |> Seq.filter filter_kw |> Seq.take max_search_terms |> List.of_seq
 
-let code = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890_-"
+let code = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-"
 let length = String.length code
 
 module CharMap = Map.Make (Char)
@@ -94,7 +94,31 @@ let keyword_to_idx kw =
 let get_current_keywords lst =
   let imap i = Array.get keyword_records i in
   let cmp kw1 kw2 = compare kw2.similarity kw1.similarity in
-  lst |> List.map imap |> List.sort cmp
+  lst |> List.map imap |> List.sort_uniq cmp
+
+let decode_state state =
+  let decoded = decode_all state in
+  let state_rep = List.map Result.to_list decoded |> List.flatten in
+  get_current_keywords state_rep
+
+let format keyword_record =
+  keyword_record.keyword ^ ": "
+  ^ string_of_int keyword_record.rank
+  ^ " ("
+  ^ Float.to_string keyword_record.similarity
+  ^ ")"
+
+let parse_keywords state current search = 
+                 let current_keywords =
+                   current |> List.map format |> String.concat "<br>"
+                 in
+                 Jg_template.from_file "templates/keywords.html"
+                   ~models:
+                     [
+                       ("current_keywords", Jg_types.Tstr current_keywords);
+                       ("search", Jg_types.Tstr search);
+                     ]
+  |> Dream.html ~headers:[ ("HX-Push-Url", "/" ^ state) ]
 
 let post state request =
   match%lwt Dream.form ~csrf:false request with
@@ -126,13 +150,12 @@ let post state request =
           let new_state = i :: state_rep |> encode_all in
           Dream.redirect request ("/keywords/" ^ new_state)
       | None ->
-          Jg_template.from_file "templates/main.html"
-            ~models:
-              [
-                ("state", Jg_types.Tstr state);
-                ("search", Jg_types.Tstr "Word not found!!");
-              ]
-          |> Dream.html)
+             let current = decode_state state in
+             match current with
+             | best :: _ when best.similarity = 1.0 ->
+                 Jg_template.from_file "templates/win.html" |> Dream.html
+             | _ -> parse_keywords state current "Word not found!"
+        )
   | _ -> Dream.empty `Bad_Request
 
 let search state request =
@@ -143,16 +166,11 @@ let search state request =
           ~models:
             [ ("search", Jg_types.Tstr search); ("state", Jg_types.Tstr state) ]
       in
-      (search search_term |> List.map active_item |> String.concat "")
+      search search_term |> List.map active_item |> String.concat ""
       |> Dream.html
   | _ -> Dream.empty `Bad_Request
 
-let format keyword_record =
-  keyword_record.keyword ^ ": "
-  ^ string_of_int keyword_record.rank
-  ^ " ("
-  ^ Float.to_string keyword_record.similarity
-  ^ ")"
+
 
 let () =
   Dream.run ~interface:"0.0.0.0"
@@ -168,17 +186,11 @@ let () =
              |> Dream.html);
          Dream.get "/keywords/:state" (fun request ->
              let state = Dream.param request "state" in
-             let decoded = decode_all state in
-             let state_rep = List.map Result.to_list decoded |> List.flatten in
-             let current = get_current_keywords state_rep in
+             let current = decode_state state in
              match current with
              | best :: _ when best.similarity = 1.0 ->
                  Jg_template.from_file "templates/win.html" |> Dream.html
-             | _ ->
-                 let current_keywords =
-                   current |> List.map format |> String.concat "<br>"
-                 in
-                 Dream.html (current_keywords ^ "<div id=\"search-results\" hx-swap-oob=\"inner\"></div>") ~headers:[("HX-Push-Url", "/" ^state)]);
+             | _ -> parse_keywords state current "");
          Dream.post "/search/" (fun request -> search "" request);
          Dream.post "/search/:state" (fun request ->
              let state = Dream.param request "state" in
@@ -195,5 +207,5 @@ let () =
                |> List.flatten |> List.map string_of_int |> String.concat ","
              in
              Dream.html ("state = " ^ state ^ "<br/>decoded = " ^ state_rep));
-        Dream.get "dist/**" (Dream.static "dist/.");
+         Dream.get "dist/**" (Dream.static "dist/.");
        ]

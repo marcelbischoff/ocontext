@@ -23,8 +23,7 @@
       hx-trigger="click" 
       hx-replace-url="false"
       hx-post="">/hint</span> for hints</li>
-    <form id="input" hx-target="#keywords" hx-post="" hx-trigger="submit" method="POST" action="/{{ state }}" hx-on::after-request="this.reset()">
-        <!--<form hx-post="/{{ state }}">-->
+    <form id="input" hx-target="#keywords" hx-post="" hx-trigger="submit" method="POST" action="/{{ state }}">
       <input 
         class="form-control text-ctp-base" 
         type="serach" 
