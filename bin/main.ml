@@ -102,31 +102,32 @@ let decode_state state =
   get_current_keywords state_rep
 
 let format keyword_record =
-  keyword_record.keyword ^ ": "
-  ^ string_of_int keyword_record.rank
-  ^ " ("
-  ^ Float.to_string keyword_record.similarity
-  ^ ")"
+  let percent = 100.0 *. keyword_record.similarity |> int_of_float in
+  Jg_template.from_file "templates/keyword.html"
+    ~models:
+      [
+        ("keyword", Jg_types.Tstr keyword_record.keyword);
+        ("rank", Jg_types.Tint keyword_record.rank);
+        ("percent", Jg_types.Tint percent);
+      ]
 
-let parse_keywords state current search = 
-                 let current_keywords =
-                   current |> List.map format |> String.concat "<br>"
-                 in
-                 Jg_template.from_file "templates/keywords.html"
-                   ~models:
-                     [
-                       ("current_keywords", Jg_types.Tstr current_keywords);
-                       ("search", Jg_types.Tstr search);
-                     ]
+let parse_keywords state current search =
+  let current_keywords =
+    current |> List.map format |> String.concat "<br /> "
+  in
+  Jg_template.from_file "templates/keywords.html"
+    ~models:
+      [
+        ("current_keywords", Jg_types.Tstr current_keywords);
+        ("search", Jg_types.Tstr search);
+        ("state", Jg_types.Tstr state);
+      ]
   |> Dream.html ~headers:[ ("HX-Push-Url", "/" ^ state) ]
 
 let post state request =
   match%lwt Dream.form ~csrf:false request with
-  | `Ok [ ("search", s) ] -> (
-      (*
-                 Jg_template.from_string "{{ s }}"
-                   ~models:[ ("s", Jg_types.Tstr ( s ^ "state=" ^ state)) ]
-                 |> Dream.html *)
+  | `Ok [ ("search", search) ] -> (
+      let s = String.lowercase_ascii search in
       let idx =
         match s with
         | "/hint" ->
@@ -149,13 +150,12 @@ let post state request =
       | Some i ->
           let new_state = i :: state_rep |> encode_all in
           Dream.redirect request ("/keywords/" ^ new_state)
-      | None ->
-             let current = decode_state state in
-             match current with
-             | best :: _ when best.similarity = 1.0 ->
-                 Jg_template.from_file "templates/win.html" |> Dream.html
-             | _ -> parse_keywords state current "Word not found!"
-        )
+      | None -> (
+          let current = decode_state state in
+          match current with
+          | best :: _ when best.similarity = 1.0 ->
+              Jg_template.from_file "templates/win.html" |> Dream.html
+          | _ -> parse_keywords state current "Word not found!"))
   | _ -> Dream.empty `Bad_Request
 
 let search state request =
@@ -169,8 +169,6 @@ let search state request =
       search search_term |> List.map active_item |> String.concat ""
       |> Dream.html
   | _ -> Dream.empty `Bad_Request
-
-
 
 let () =
   Dream.run ~interface:"0.0.0.0"
