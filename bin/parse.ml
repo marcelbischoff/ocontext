@@ -36,7 +36,8 @@ let parse_line (line : string) : wordv option =
   match cols with
   | word :: vec_str ->
       let vector = vec_str |> List.map float_of_string |> Array.of_list in
-      if is_alpha word && String.length word > 3 && String.length word < 8 then Some { word; vector }
+      if is_alpha word && String.length word > 3 && String.length word < 8 then
+        Some { word; vector }
       else None
   | _ -> failwith "parse error"
 ;;
