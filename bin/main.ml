@@ -57,12 +57,14 @@ let char_to_idx (c : char) = CharMap.find_opt c char_to_id_map
 let idx_to_char (i : int) = String.get code i
 
 let encode (i : int) : string option =
-  match 0 <= i && i < length * length with
+  match 0 <= i && i < length * length * length with
   | false -> None
   | true ->
-      let s1 = idx_to_char (i / length) |> Char.escaped in
-      let s2 = idx_to_char (i mod length) |> Char.escaped in
-      Some (s1 ^ s2)
+      let s1 = idx_to_char (i / length / length) |> Char.escaped in
+      let i1 = i mod (length * length) in
+      let s2 = idx_to_char (i1 / length) |> Char.escaped in
+      let s3 = idx_to_char (i1 mod length) |> Char.escaped in
+      Some (s1 ^ s2 ^ s3)
 
 let encode_all (state_rep : int list) : string =
   state_rep |> List.filter_map encode |> String.concat ""
@@ -70,9 +72,11 @@ let encode_all (state_rep : int list) : string =
 let decode (s : string) =
   let a = char_to_idx (String.get s 0) in
   let b = char_to_idx (String.get s 1) in
+  let c = char_to_idx (String.get s 2) in
   Option.to_result ~none:(Error "not decodable")
     ( a >>= fun i ->
-      b >>= fun j -> Some ((length * i) + j) )
+      b >>= fun j ->
+      c >>= fun k -> Some ((length * length * i) + (length * j) + k) )
 
 let decode_all s =
   let rec aux lst is =
@@ -80,8 +84,8 @@ let decode_all s =
     match is with
     | "" -> lst
     | _ ->
-        let chunk = String.sub is 0 2 in
-        let remainder = String.sub is 2 (ilen - 2) in
+        let chunk = String.sub is 0 3 in
+        let remainder = String.sub is 3 (ilen - 3) in
         let decoded = decode chunk :: lst in
         aux decoded remainder
   in
